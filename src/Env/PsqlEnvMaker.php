@@ -11,7 +11,12 @@ class PsqlEnvMaker extends AbstractEnvMaker
         $this->replaceOrAdd('DB_CONNECTION=mysql', 'DB_CONNECTION=psql');
         $this->replaceOrAdd('DB_HOST=127.0.0.1', 'DB_HOST=pgsql');
         $this->replaceOrAdd('DB_PORT=3306', 'DB_PORT=5432');
-        $this->env = preg_replace("/DB_PASSWORD=(.*)/", "DB_PASSWORD=password", $this->env);
+
+        if (preg_match('/DB_PASSWORD=(.*)/', $this->env)) {
+            $this->env = preg_replace('/DB_PASSWORD=(.*)/', "DB_PASSWORD=password", $this->env);
+        } else {
+            $this->add('DB_PASSWORD=password');
+        }
 
         return $this->env;
     }
