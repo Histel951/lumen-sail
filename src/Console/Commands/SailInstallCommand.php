@@ -2,6 +2,13 @@
 
 namespace Histel\LumenSail\Console\Commands;
 
+use Histel\LumenSail\Env\EnvMaker;
+use Histel\LumenSail\Env\MariadbEnvMaker;
+use Histel\LumenSail\Env\MeiliSearchEnvMaker;
+use Histel\LumenSail\Env\MemcachedEnvMaker;
+use Histel\LumenSail\Env\MysqlEnvMaker;
+use Histel\LumenSail\Env\PsqlEnvMaker;
+use Histel\LumenSail\Env\RedisEnvMaker;
 use Illuminate\Console\Command;
 
 class SailInstallCommand extends Command
@@ -21,12 +28,32 @@ class SailInstallCommand extends Command
     protected $description = 'Install Laravel Sail\'s default Docker Compose file';
 
     /**
+     *
+     * @var array|string[]
+     */
+    private array $servicesEnv = [
+        'pgsql' => PsqlEnvMaker::class,
+        'mariadb' => MariadbEnvMaker::class,
+        'mysql' => MysqlEnvMaker::class,
+        'meilisearch' => MeiliSearchEnvMaker::class,
+        'memcached' => MemcachedEnvMaker::class,
+        'redis' => RedisEnvMaker::class
+    ];
+
+    /**
      * Execute the console command.
      *
      * @return void
      */
-    public function handle()
+    public function handle(): void
     {
+        $environment = file_get_contents($this->laravel->basePath('.env'));
+
+        if (!preg_match('/COMPOSE_PROJECT_NAME=(.*)/', $environment)) {
+            $composeProjectName = $this->ask('Write the composer project name:');
+            $environment .= "\nCOMPOSE_PROJECT_NAME=$composeProjectName\n";
+        }
+
         if ($this->option('with')) {
             $services = $this->option('with') == 'none' ? [] : explode(',', $this->option('with'));
         } elseif ($this->option('no-interaction')) {
@@ -35,9 +62,13 @@ class SailInstallCommand extends Command
             $services = $this->gatherServicesWithSymfonyMenu();
         }
 
-        $this->buildDockerCompose($services);
-        $this->replaceEnvVariables($services);
-        $this->buildStubs();
+        $environment = $this->buildServiceEnv($environment, $services);
+        file_put_contents($this->laravel->basePath('.env'), $environment);
+
+        $dockerCompose = $this->buildDockerComposeYml($services);
+        file_put_contents($this->laravel->basePath('docker-compose.yml'), $dockerCompose);
+
+        copy(__DIR__ . '/../../../stubs/server.php', base_path('server.php'));
 
         $this->info('Sail scaffolding installed successfully.');
     }
@@ -45,7 +76,7 @@ class SailInstallCommand extends Command
     /**
      * Gather the desired Sail services using a Symfony menu.
      *
-     * @return array
+     * @return array|string
      */
     protected function gatherServicesWithSymfonyMenu()
     {
@@ -66,28 +97,28 @@ class SailInstallCommand extends Command
      * Build the Docker Compose file.
      *
      * @param  array  $services
-     * @return void
+     * @return string
      */
-    protected function buildDockerCompose(array $services)
+    protected function buildDockerComposeYml(array $services): string
     {
         $depends = collect($services)
             ->filter(function ($service) {
                 return in_array($service, ['mysql', 'pgsql', 'mariadb', 'redis', 'selenium']);
             })->map(function ($service) {
-                return "            - {$service}";
+                return "            - $service";
             })->whenNotEmpty(function ($collection) {
                 return $collection->prepend('depends_on:');
             })->implode("\n");
 
         $stubs = rtrim(collect($services)->map(function ($service) {
-            return file_get_contents($this->laravel->basePath("vendor/laravel/sail/stubs/{$service}.stub"));
+            return file_get_contents($this->laravel->basePath("vendor/laravel/sail/stubs/$service.stub"));
         })->implode(''));
 
         $volumes = collect($services)
             ->filter(function ($service) {
                 return in_array($service, ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio']);
             })->map(function ($service) {
-                return "    sail-{$service}:\n        driver: local";
+                return "    sail-$service:\n        driver: local";
             })->whenNotEmpty(function ($collection) {
                 return $collection->prepend('volumes:');
             })->implode("\n");
@@ -99,52 +130,28 @@ class SailInstallCommand extends Command
         $dockerCompose = str_replace('{{volumes}}', $volumes, $dockerCompose);
 
         // Remove empty lines...
-        $dockerCompose = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $dockerCompose);
-
-        file_put_contents($this->laravel->basePath('docker-compose.yml'), $dockerCompose);
+        return preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $dockerCompose);
     }
 
     /**
      * Replace the Host environment variables in the app's .env file.
      *
+     * @param string $environment
      * @param  array  $services
-     * @return void
+     * @return string
      */
-    protected function replaceEnvVariables(array $services)
+    protected function buildServiceEnv(string $environment, array $services): string
     {
-        $environment = file_get_contents($this->laravel->basePath('.env'));
-
-        if (in_array('pgsql', $services, true)) {
-            $environment = str_replace('DB_CONNECTION=mysql', "DB_CONNECTION=pgsql", $environment);
-            $environment = str_replace('DB_HOST=127.0.0.1', "DB_HOST=pgsql", $environment);
-            $environment = str_replace('DB_PORT=3306', "DB_PORT=5432", $environment);
-        } elseif (in_array('mariadb', $services, true)) {
-            $environment = str_replace('DB_HOST=127.0.0.1', "DB_HOST=mariadb", $environment);
-        } else {
-            $environment = str_replace('DB_HOST=127.0.0.1', "DB_HOST=mysql", $environment);
+        foreach ($this->servicesEnv as $service => $envClass) {
+            if (in_array($service, $services)) {
+                /**
+                 * @var EnvMaker $envMaker
+                 */
+                $envMaker = new $envClass($environment);
+                $environment = $envMaker->make();
+            }
         }
 
-        $environment = str_replace('DB_USERNAME=root', "DB_USERNAME=sail", $environment);
-        $environment = preg_replace("/DB_PASSWORD=(.*)/", "DB_PASSWORD=password", $environment);
-
-        $environment = str_replace('MEMCACHED_HOST=127.0.0.1', 'MEMCACHED_HOST=memcached', $environment);
-        $environment = str_replace('REDIS_HOST=127.0.0.1', 'REDIS_HOST=redis', $environment);
-
-        if (in_array('meilisearch', $services, true)) {
-            $environment .= "\nSCOUT_DRIVER=meilisearch";
-            $environment .= "\nMEILISEARCH_HOST=http://meilisearch:7700\n";
-        }
-
-        file_put_contents($this->laravel->basePath('.env'), $environment);
-    }
-
-    /**
-     * Build stubs files.
-     *
-     * @return void
-     */
-    protected function buildStubs()
-    {
-        copy(__DIR__ . '/../../../stubs/server.php', base_path('server.php'));
+        return $environment;
     }
 }
