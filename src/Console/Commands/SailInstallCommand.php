@@ -2,13 +2,16 @@
 
 namespace Histel\LumenSail\Console\Commands;
 
-use Histel\LumenSail\Env\EnvMaker;
-use Histel\LumenSail\Env\MariadbEnvMaker;
-use Histel\LumenSail\Env\MeiliSearchEnvMaker;
-use Histel\LumenSail\Env\MemcachedEnvMaker;
-use Histel\LumenSail\Env\MysqlEnvMaker;
-use Histel\LumenSail\Env\PsqlEnvMaker;
-use Histel\LumenSail\Env\RedisEnvMaker;
+use Histel\LumenSail\Maker\Docker\DockerYmlDependsMaker;
+use Histel\LumenSail\Maker\Docker\DockerYmlServicesMaker;
+use Histel\LumenSail\Maker\Docker\DockerYmlVolumesMaker;
+use Histel\LumenSail\Maker\Env\MariadbEnvMaker;
+use Histel\LumenSail\Maker\Env\MeiliSearchEnvMaker;
+use Histel\LumenSail\Maker\Env\MemcachedEnvMaker;
+use Histel\LumenSail\Maker\Env\MysqlEnvMaker;
+use Histel\LumenSail\Maker\Env\PsqlEnvMaker;
+use Histel\LumenSail\Maker\Env\RedisEnvMaker;
+use Histel\LumenSail\Maker\MakerInterface;
 use Illuminate\Console\Command;
 
 class SailInstallCommand extends Command
@@ -31,13 +34,31 @@ class SailInstallCommand extends Command
      *
      * @var array|string[]
      */
-    private array $servicesEnv = [
+    protected array $servicesEnv = [
         'pgsql' => PsqlEnvMaker::class,
         'mariadb' => MariadbEnvMaker::class,
         'mysql' => MysqlEnvMaker::class,
         'meilisearch' => MeiliSearchEnvMaker::class,
         'memcached' => MemcachedEnvMaker::class,
         'redis' => RedisEnvMaker::class
+    ];
+
+    /**
+     * @var array
+     */
+    protected $serviceDocker = [
+        'volumes' => [
+            'class' => DockerYmlVolumesMaker::class,
+            'services' => ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio']
+        ],
+        'depends' => [
+            'class' => DockerYmlDependsMaker::class,
+            'services' => ['mysql', 'pgsql', 'mariadb', 'redis', 'selenium']
+        ],
+        'services' => [
+            'class' => DockerYmlServicesMaker::class,
+            'services' => []
+        ]
     ];
 
     /**
@@ -65,10 +86,10 @@ class SailInstallCommand extends Command
         $environment = $this->buildServiceEnv($environment, $services);
         file_put_contents($this->laravel->basePath('.env'), $environment);
 
-        $dockerCompose = $this->buildDockerComposeYml($services);
+        $dockerCompose = $this->buildDockerComposeYml();
         file_put_contents($this->laravel->basePath('docker-compose.yml'), $dockerCompose);
 
-        copy(__DIR__ . '/../../../stubs/server.php', base_path('server.php'));
+        copy(__DIR__ . '/../../../stubs/server.php', $this->laravel->basePath('server.php'));
 
         $this->info('Sail scaffolding installed successfully.');
     }
@@ -96,38 +117,21 @@ class SailInstallCommand extends Command
     /**
      * Build the Docker Compose file.
      *
-     * @param  array  $services
      * @return string
      */
-    protected function buildDockerComposeYml(array $services): string
+    protected function buildDockerComposeYml(): string
     {
-        $depends = collect($services)
-            ->filter(function ($service) {
-                return in_array($service, ['mysql', 'pgsql', 'mariadb', 'redis', 'selenium']);
-            })->map(function ($service) {
-                return "            - $service";
-            })->whenNotEmpty(function ($collection) {
-                return $collection->prepend('depends_on:');
-            })->implode("\n");
-
-        $stubs = rtrim(collect($services)->map(function ($service) {
-            return file_get_contents($this->laravel->basePath("vendor/laravel/sail/stubs/$service.stub"));
-        })->implode(''));
-
-        $volumes = collect($services)
-            ->filter(function ($service) {
-                return in_array($service, ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio']);
-            })->map(function ($service) {
-                return "    sail-$service:\n        driver: local";
-            })->whenNotEmpty(function ($collection) {
-                return $collection->prepend('volumes:');
-            })->implode("\n");
-
         $dockerCompose = file_get_contents($this->laravel->basePath('vendor/laravel/sail/stubs/docker-compose.stub'));
 
-        $dockerCompose = str_replace('{{depends}}', empty($depends) ? '' : '        '.$depends, $dockerCompose);
-        $dockerCompose = str_replace('{{services}}', $stubs, $dockerCompose);
-        $dockerCompose = str_replace('{{volumes}}', $volumes, $dockerCompose);
+        foreach ($this->serviceDocker as $config => $item) {
+            /**
+             * @var MakerInterface $dockerYmlMaker
+             */
+            $dockerYmlMaker = new $item['class']($item['services']);
+            $configValue = $dockerYmlMaker->make();
+
+            $dockerCompose = str_replace("{{$config}}", $configValue, $dockerCompose);
+        }
 
         // Remove empty lines...
         return preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $dockerCompose);
@@ -145,7 +149,7 @@ class SailInstallCommand extends Command
         foreach ($this->servicesEnv as $service => $envClass) {
             if (in_array($service, $services)) {
                 /**
-                 * @var EnvMaker $envMaker
+                 * @var MakerInterface $envMaker
                  */
                 $envMaker = new $envClass($environment);
                 $environment = $envMaker->make();
