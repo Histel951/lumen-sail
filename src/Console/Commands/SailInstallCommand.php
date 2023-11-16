@@ -46,7 +46,7 @@ class SailInstallCommand extends Command
     /**
      * @var array
      */
-    protected $serviceDocker = [
+    protected array $serviceDocker = [
         'volumes' => [
             'class' => DockerYmlVolumesMaker::class,
             'services' => ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio']
@@ -86,7 +86,7 @@ class SailInstallCommand extends Command
         $environment = $this->buildServiceEnv($environment, $services);
         file_put_contents($this->laravel->basePath('.env'), $environment);
 
-        $dockerCompose = $this->buildDockerComposeYml();
+        $dockerCompose = $this->buildDockerComposeYml($services);
         file_put_contents($this->laravel->basePath('docker-compose.yml'), $dockerCompose);
 
         copy(__DIR__ . '/../../../stubs/server.php', $this->laravel->basePath('server.php'));
@@ -117,9 +117,10 @@ class SailInstallCommand extends Command
     /**
      * Build the Docker Compose file.
      *
+     * @param array $services
      * @return string
      */
-    protected function buildDockerComposeYml(): string
+    protected function buildDockerComposeYml(array $services): string
     {
         $dockerCompose = file_get_contents($this->laravel->basePath('vendor/laravel/sail/stubs/docker-compose.stub'));
 
@@ -127,10 +128,10 @@ class SailInstallCommand extends Command
             /**
              * @var MakerInterface $dockerYmlMaker
              */
-            $dockerYmlMaker = new $item['class']($item['services']);
+            $dockerYmlMaker = new $item['class']($services, $item['services']);
             $configValue = $dockerYmlMaker->make();
 
-            $dockerCompose = str_replace("{{$config}}", $configValue, $dockerCompose);
+            $dockerCompose = str_replace("{{{$config}}}", $configValue, $dockerCompose);
         }
 
         // Remove empty lines...
