@@ -9,8 +9,11 @@ abstract class AbstractDockerMaker implements MakerInterface
 {
     protected array $services;
 
-    public function __construct(array $services)
+    protected array $usesServices;
+
+    public function __construct(array $services, array $usesServices)
     {
         $this->services = $services;
+        $this->usesServices = $usesServices;
     }
 }

@@ -9,7 +9,7 @@ class DockerYmlDependsMaker extends AbstractDockerMaker
     {
         $depends =  collect($this->services)
             ->filter(function ($service) {
-                return in_array($service, ['mysql', 'pgsql', 'mariadb', 'redis', 'selenium']);
+                return in_array($service, $this->usesServices);
             })->map(function ($service) {
                 return "            - $service";
             })->whenNotEmpty(function ($collection) {
