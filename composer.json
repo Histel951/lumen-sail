@@ -7,8 +7,8 @@
     },
     "authors": [
         {
-            "name": "Mahdi M. Raad",
-            "email": "mahdiraad@gmail.com"
+            "name": "Danil Kolotilkin",
+            "email": "histel951@gmail.com"
         }
     ],
     "require": {
@@ -16,13 +16,13 @@
     },
     "autoload": {
         "psr-4": {
-            "mahdiraad\\LumenSail\\": "src/"
+            "Histel\\LumenSail\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "mahdiraad\\LumenSail\\LumenSailServiceProvider"
+                "Histel\\LumenSail\\LumenSailServiceProvider"
             ]
         }
     }
