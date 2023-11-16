@@ -1,7 +1,7 @@
 <?php
-namespace Histel\LumenSail\Env;
+namespace Histel\LumenSail\Maker;
 
-interface EnvMaker
+interface MakerInterface
 {
     public function make(): string;
 }

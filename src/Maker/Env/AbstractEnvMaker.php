@@ -1,7 +1,9 @@
 <?php
-namespace Histel\LumenSail\Env;
+namespace Histel\LumenSail\Maker\Env;
 
-abstract class AbstractEnvMaker implements EnvMaker
+use Histel\LumenSail\Maker\MakerInterface;
+
+abstract class AbstractEnvMaker implements MakerInterface
 {
     /**
      * @var string

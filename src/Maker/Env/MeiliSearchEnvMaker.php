@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Histel\LumenSail\Env;
+namespace Histel\LumenSail\Maker\Env;
 
 class MeiliSearchEnvMaker extends AbstractEnvMaker
 {
