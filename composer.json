@@ -1,9 +1,9 @@
 {
-    "name": "mahdiraad/lumen-sail",
+    "name": "histel/lumen-sail",
     "description": "Installing Laravel Sail Package in Lumen",
     "license": "MIT",
     "support": {
-        "source": "https://github.com/mahdiraad/lumen-sail"
+        "source": "https://github.com/Histel951/lumen-sail"
     },
     "authors": [
         {
