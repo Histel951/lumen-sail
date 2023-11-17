@@ -2,16 +2,8 @@
 
 namespace Histel\LumenSail\Console\Commands;
 
-use Histel\LumenSail\Maker\Docker\DockerYmlDependsMaker;
-use Histel\LumenSail\Maker\Docker\DockerYmlServicesMaker;
-use Histel\LumenSail\Maker\Docker\DockerYmlVolumesMaker;
-use Histel\LumenSail\Maker\Env\MariadbEnvMaker;
-use Histel\LumenSail\Maker\Env\MeiliSearchEnvMaker;
-use Histel\LumenSail\Maker\Env\MemcachedEnvMaker;
-use Histel\LumenSail\Maker\Env\MysqlEnvMaker;
-use Histel\LumenSail\Maker\Env\PsqlEnvMaker;
-use Histel\LumenSail\Maker\Env\RedisEnvMaker;
-use Histel\LumenSail\Maker\MakerInterface;
+use Histel\LumenSail\Builder\BuilderFactory;
+use Histel\LumenSail\Builder\BuilderInterface;
 use Illuminate\Console\Command;
 
 class SailInstallCommand extends Command
@@ -31,132 +23,99 @@ class SailInstallCommand extends Command
     protected $description = 'Install Laravel Sail\'s default Docker Compose file';
 
     /**
-     *
-     * @var array|string[]
-     */
-    protected array $servicesEnv = [
-        'pgsql' => PsqlEnvMaker::class,
-        'mariadb' => MariadbEnvMaker::class,
-        'mysql' => MysqlEnvMaker::class,
-        'meilisearch' => MeiliSearchEnvMaker::class,
-        'memcached' => MemcachedEnvMaker::class,
-        'redis' => RedisEnvMaker::class
-    ];
-
-    /**
-     * @var array
-     */
-    protected array $serviceDocker = [
-        'volumes' => [
-            'class' => DockerYmlVolumesMaker::class,
-            'services' => ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio']
-        ],
-        'depends' => [
-            'class' => DockerYmlDependsMaker::class,
-            'services' => ['mysql', 'pgsql', 'mariadb', 'redis', 'selenium']
-        ],
-        'services' => [
-            'class' => DockerYmlServicesMaker::class,
-            'services' => []
-        ]
-    ];
-
-    /**
      * Execute the console command.
      *
      * @return void
      */
     public function handle(): void
     {
-        $environment = file_get_contents($this->laravel->basePath('.env'));
+        $dockerCompose = $this->getDockerComposeYml();
+        $env = $this->receiveEnv();
+        $services = $this->receiveServices();
 
-        if (!preg_match('/COMPOSE_PROJECT_NAME=(.*)/', $environment)) {
-            $composeProjectName = $this->ask('Write the composer project name:');
-            $environment .= "\nCOMPOSE_PROJECT_NAME=$composeProjectName\n";
-        }
+        $builderFactory = new BuilderFactory();
+        $this->createConfig($builderFactory->env($env), '.env', $services);
+        $this->createConfig($builderFactory->dockerYml($dockerCompose), 'docker-compose.yml', $services);
 
-        if ($this->option('with')) {
-            $services = $this->option('with') == 'none' ? [] : explode(',', $this->option('with'));
-        } elseif ($this->option('no-interaction')) {
-            $services = ['mysql', 'redis', 'selenium', 'mailhog'];
-        } else {
-            $services = $this->gatherServicesWithSymfonyMenu();
-        }
-
-        $environment = $this->buildServiceEnv($environment, $services);
-        file_put_contents($this->laravel->basePath('.env'), $environment);
-
-        $dockerCompose = $this->buildDockerComposeYml($services);
-        file_put_contents($this->laravel->basePath('docker-compose.yml'), $dockerCompose);
-
-        copy(__DIR__ . '/../../../stubs/server.php', $this->laravel->basePath('server.php'));
+        $this->publishStubs();
 
         $this->info('Sail scaffolding installed successfully.');
     }
 
     /**
-     * Build the Docker Compose file.
      *
+     * @return string
+     */
+    private function getDockerComposeYml(): string
+    {
+        return file_get_contents($this->laravel->basePath('vendor/laravel/sail/stubs/docker-compose.stub'));
+    }
+
+    /**
+     * Receive env config.
+     *
+     * @return string
+     */
+    private function receiveEnv(): string
+    {
+        $env = file_get_contents($this->laravel->basePath('.env'));
+        if (!preg_match('/COMPOSE_PROJECT_NAME=(.*)/', $env)) {
+            $composeProjectName = $this->ask('Write the composer project name:');
+            $env .= "\nCOMPOSE_PROJECT_NAME=$composeProjectName\n";
+        }
+
+        return $env;
+    }
+
+    /**
+     * Select services.
+     *
+     * @return array|string[]
+     */
+    private function receiveServices(): array
+    {
+        if ($this->option('with')) {
+            $services = $this->option('with') == 'none' ? [] : explode(',', $this->option('with'));
+        } elseif ($this->option('no-interaction')) {
+            $services = ['mysql', 'redis', 'selenium', 'mailhog'];
+        } else {
+            $services = $this->choice('Which services would you like to install?', [
+                'mysql',
+                'pgsql',
+                'mariadb',
+                'redis',
+                'memcached',
+                'meilisearch',
+                'minio',
+                'mailhog',
+                'selenium',
+            ], 0, null, true);
+        }
+
+        return $services;
+    }
+
+    /**
+     * Creates a config file.
+     *
+     * @param BuilderInterface $builder
+     * @param string $basePath
      * @param array $services
-     * @return string
+     * @return void
      */
-    protected function buildDockerComposeYml(array $services): string
+    private function createConfig(BuilderInterface $builder, string $basePath, array $services): void
     {
-        $dockerCompose = file_get_contents($this->laravel->basePath('vendor/laravel/sail/stubs/docker-compose.stub'));
-
-        foreach ($this->serviceDocker as $config => $item) {
-            /**
-             * @var MakerInterface $dockerYmlMaker
-             */
-            $dockerYmlMaker = new $item['class']($services, $item['services']);
-            $configValue = $dockerYmlMaker->make();
-
-            $dockerCompose = str_replace("{{{$config}}}", $configValue, $dockerCompose);
-        }
-
-        // Remove empty lines...
-        return preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $dockerCompose);
+        $environment = $builder->build($services);
+        file_put_contents($this->laravel->basePath($basePath), $environment);
     }
 
     /**
-     * Replace the Host environment variables in the app's .env file.
+     * Publishing stubs.
      *
-     * @param string $environment
-     * @param  array  $services
-     * @return string
+     * @return void
      */
-    protected function buildServiceEnv(string $environment, array $services): string
+    private function publishStubs(): void
     {
-        foreach ($this->servicesEnv as $service => $envClass) {
-            if (in_array($service, $services)) {
-                /**
-                 * @var MakerInterface $envMaker
-                 */
-                $envMaker = new $envClass($environment);
-                $environment = $envMaker->make();
-            }
-        }
-
-        return $environment;
-    }
-
-    /**
-     * Gather the desired Sail services using a Symfony menu.
-     *
-     * @return array|string
-     */
-    protected function gatherServicesWithSymfonyMenu()
-    {
-        return $this->choice('Which services would you like to install?', [
-            'mysql',
-            'pgsql',
-            'mariadb',
-            'redis',
-            'memcached',
-            'meilisearch',
-            'minio',
-            'mailhog',
-            'selenium',
-        ], 0, null, true);
+        copy(__DIR__ . '/../../../stubs/server.php', $this->laravel->basePath('server.php'));
     }
 }

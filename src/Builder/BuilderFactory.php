@@ -1,23 +1,32 @@
 <?php
 declare(strict_types=1);
 
-namespace Histel\LumenSail\Builder\Docker;
+namespace Histel\LumenSail\Builder;
 
-use Histel\LumenSail\Builder\BuilderFactoryInterface;
-use Histel\LumenSail\Builder\BuilderInterface;
+use Histel\LumenSail\Builder\Docker\DockerYmlReplaceBuilder;
+use Histel\LumenSail\Builder\Env\EnvBuilder;
 
 /*
  * Класс будет возращать актуальную версию реализации билдера конфигов,
  * в зависимости от версии установленной laravel/sail
  */
-class DockerYmlBuilderFactory implements BuilderFactoryInterface
+class BuilderFactory implements BuilderFactoryInterface
 {
     /**
      * @param string $config
      * @return BuilderInterface
      */
-    public function actual($config = null): BuilderInterface
+    public function dockerYml(string $config): BuilderInterface
     {
         return new DockerYmlReplaceBuilder($config);
+    }
+
+    /**
+     * @param string $config
+     * @return BuilderInterface
+     */
+    public function env(string $config): BuilderInterface
+    {
+        return new EnvBuilder($config);
     }
 }
