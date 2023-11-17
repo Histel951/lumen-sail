@@ -95,26 +95,6 @@ class SailInstallCommand extends Command
     }
 
     /**
-     * Gather the desired Sail services using a Symfony menu.
-     *
-     * @return array|string
-     */
-    protected function gatherServicesWithSymfonyMenu()
-    {
-        return $this->choice('Which services would you like to install?', [
-            'mysql',
-            'pgsql',
-            'mariadb',
-            'redis',
-            'memcached',
-            'meilisearch',
-            'minio',
-            'mailhog',
-            'selenium',
-        ], 0, null, true);
-    }
-
-    /**
      * Build the Docker Compose file.
      *
      * @param array $services
@@ -158,5 +138,25 @@ class SailInstallCommand extends Command
         }
 
         return $environment;
+    }
+
+    /**
+     * Gather the desired Sail services using a Symfony menu.
+     *
+     * @return array|string
+     */
+    protected function gatherServicesWithSymfonyMenu()
+    {
+        return $this->choice('Which services would you like to install?', [
+            'mysql',
+            'pgsql',
+            'mariadb',
+            'redis',
+            'memcached',
+            'meilisearch',
+            'minio',
+            'mailhog',
+            'selenium',
+        ], 0, null, true);
     }
 }
