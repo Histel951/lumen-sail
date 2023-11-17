@@ -1,6 +1,10 @@
 # lumen-sail
 Installing Laravel Sail Package in Lumen
 
+
+## Warning!!! 
+### maximum supported version of laravel/sail v1.19.0, I plan to add support for newer versions in the near future.
+
 ```shell
 $ composer require histel/lumen-sail
 ```
