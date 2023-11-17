@@ -11,7 +11,7 @@ Add this line to bootstrap/app.php
 $app->register(\Histel\LumenSail\LumenSailServiceProvider::class);
 ```
 
-Installing synergy-start
+Installing scaffolding
 
 ```shell
 $ php artisan sail:install
