@@ -13,6 +13,8 @@ use Histel\LumenSail\Builder\Env\EnvBuilder;
 class BuilderFactory implements BuilderFactoryInterface
 {
     /**
+     * Returns the current docker.yml builder implementation for the installed version "laravel/sail".
+     *
      * @param string $config
      * @return BuilderInterface
      */
@@ -22,6 +24,8 @@ class BuilderFactory implements BuilderFactoryInterface
     }
 
     /**
+     * Returns the current .env builder implementation for the installed version "laravel/sail".
+     *
      * @param string $config
      * @return BuilderInterface
      */

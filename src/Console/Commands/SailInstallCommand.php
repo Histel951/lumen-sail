@@ -5,6 +5,7 @@ namespace Histel\LumenSail\Console\Commands;
 use Histel\LumenSail\Builder\BuilderFactory;
 use Histel\LumenSail\Builder\BuilderInterface;
 use Illuminate\Console\Command;
+use Histel\LumenSail\DockerServicesEnum as DSE;
 
 class SailInstallCommand extends Command
 {
@@ -43,6 +44,7 @@ class SailInstallCommand extends Command
     }
 
     /**
+     * Return laravel/sail docker-compose stub to string;
      *
      * @return string
      */
@@ -77,18 +79,18 @@ class SailInstallCommand extends Command
         if ($this->option('with')) {
             $services = $this->option('with') == 'none' ? [] : explode(',', $this->option('with'));
         } elseif ($this->option('no-interaction')) {
-            $services = ['mysql', 'redis', 'selenium', 'mailhog'];
+            $services = [DSE::MYSQL, DSE::REDIS, DSE::SELENIUM, DSE::MAIL_HOG];
         } else {
             $services = $this->choice('Which services would you like to install?', [
-                'mysql',
-                'pgsql',
-                'mariadb',
-                'redis',
-                'memcached',
-                'meilisearch',
-                'minio',
-                'mailhog',
-                'selenium',
+                DSE::MYSQL,
+                DSE::PGSQL,
+                DSE::MARIADB,
+                DSE::REDIS,
+                DSE::MEMCACHED,
+                DSE::MEILI_SEARCH,
+                DSE::MINIO,
+                DSE::MAIL_HOG,
+                DSE::SELENIUM,
             ], 0, null, true);
         }
 

@@ -7,6 +7,7 @@ interface BuilderInterface
 {
     /**
      * Build config depending on the transferred services.
+     *
      * @param array $services
      * @return string
      */

@@ -5,9 +5,9 @@ namespace Histel\LumenSail\Maker\Docker;
 
 class DockerYmlServicesMaker extends AbstractDockerMaker
 {
-    public function make(): string
+    public function make(array $services = []): string
     {
-        return rtrim(collect($this->services)->map(function ($service) {
+        return rtrim(collect($services)->map(function ($service) {
             return file_get_contents(base_path("vendor/laravel/sail/stubs/$service.stub"));
         })->implode(''));
     }
