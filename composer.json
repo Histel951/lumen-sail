@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "laravel/sail": "^1.26",
+        "laravel/sail": "*",
         "symfony/yaml": "^6.3"
     },
     "autoload": {
