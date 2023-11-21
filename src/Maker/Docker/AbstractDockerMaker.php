@@ -18,7 +18,7 @@ abstract class AbstractDockerMaker implements MakerInterface
      * Make docker-compose.yml.
      *
      * @param array $services services that the user selected for the build
-     * @return  string
+     * @return array|string
      */
-    abstract public function make(array $services = []): string;
+    abstract public function make(array $services = []);
 }

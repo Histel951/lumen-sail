@@ -12,7 +12,8 @@
         }
     ],
     "require": {
-        "laravel/sail": "<=1.19.0"
+        "laravel/sail": "^1.26",
+        "symfony/yaml": "^6.3"
     },
     "autoload": {
         "psr-4": {

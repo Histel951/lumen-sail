@@ -4,14 +4,15 @@ declare(strict_types=1);
 namespace Histel\LumenSail\Builder\Env;
 
 use Histel\LumenSail\Builder\AbstractBuilder;
-use Histel\LumenSail\Builder\BuilderInterface;
+use Histel\LumenSail\Maker\Env\MailPitEnvMaker;
 use Histel\LumenSail\Maker\Env\MariadbEnvMaker;
 use Histel\LumenSail\Maker\Env\MeiliSearchEnvMaker;
 use Histel\LumenSail\Maker\Env\MemcachedEnvMaker;
 use Histel\LumenSail\Maker\Env\MysqlEnvMaker;
 use Histel\LumenSail\Maker\Env\PsqlEnvMaker;
 use Histel\LumenSail\Maker\Env\RedisEnvMaker;
-use Histel\LumenSail\Maker\MakerInterface;
+use Histel\LumenSail\DockerServicesEnum as DSE;
+use Histel\LumenSail\Maker\Env\SoketiEnvMaker;
 
 class EnvBuilder extends AbstractBuilder
 {
@@ -27,23 +28,21 @@ class EnvBuilder extends AbstractBuilder
      * @var array|string[]
      */
     protected array $makersClasses = [
-        'pgsql' => PsqlEnvMaker::class,
-        'mariadb' => MariadbEnvMaker::class,
-        'mysql' => MysqlEnvMaker::class,
-        'meilisearch' => MeiliSearchEnvMaker::class,
-        'memcached' => MemcachedEnvMaker::class,
-        'redis' => RedisEnvMaker::class
+        DSE::PGSQL => PsqlEnvMaker::class,
+        DSE::MARIADB => MariadbEnvMaker::class,
+        DSE::MYSQL => MysqlEnvMaker::class,
+        DSE::MEILI_SEARCH => MeiliSearchEnvMaker::class,
+        DSE::MEMCACHED => MemcachedEnvMaker::class,
+        DSE::REDIS => RedisEnvMaker::class,
+        DSE::SOKETI => SoketiEnvMaker::class,
+        DSE::MAIL_PIT => MailPitEnvMaker::class,
     ];
 
     public function build(array $services): string
     {
         foreach ($this->makers as $makerDTO) {
             if (in_array($makerDTO->getName(), $services)) {
-                /**
-                 * @var MakerInterface $envMaker
-                 */
-                $envMaker = new $envClass($this->config);
-                $this->config = $envMaker->make();
+                $this->config = $makerDTO->getMaker()->make($this->config);
             }
         }
 

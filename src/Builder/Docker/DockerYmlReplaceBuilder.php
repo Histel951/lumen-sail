@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Histel\LumenSail\Builder\Docker;
 
 use Histel\LumenSail\Builder\AbstractBuilder;
-use Histel\LumenSail\Maker\Docker\DockerYmlDependsMaker;
-use Histel\LumenSail\Maker\Docker\DockerYmlServicesMaker;
-use Histel\LumenSail\Maker\Docker\DockerYmlVolumesMaker;
+use Histel\LumenSail\Maker\Docker\V1\DockerYmlDependsMaker;
+use Histel\LumenSail\Maker\Docker\V1\DockerYmlServicesMaker;
+use Histel\LumenSail\Maker\Docker\V1\DockerYmlVolumesMaker;
 
 class DockerYmlReplaceBuilder extends AbstractBuilder
 {
@@ -17,7 +17,7 @@ class DockerYmlReplaceBuilder extends AbstractBuilder
     const LAST_VERSION = '1.19.0';
 
     /**
-     * @var array
+     * @var string[]
      */
     protected array $makersClasses = [
         'volumes' => DockerYmlVolumesMaker::class,

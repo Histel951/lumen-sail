@@ -8,10 +8,10 @@ interface BuilderFactoryInterface
     /**
      * Returns the current docker.yml builder implementation for the installed version "laravel/sail".
      *
-     * @param string $config
+     * @param string|array $config
      * @return BuilderInterface
      */
-    public function dockerYml(string $config): BuilderInterface;
+    public function dockerYml($config): BuilderInterface;
 
     /**
      * Returns the current .env builder implementation for the installed version "laravel/sail".

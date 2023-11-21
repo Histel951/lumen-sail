@@ -12,11 +12,11 @@ class PsqlEnvMaker extends AbstractEnvMaker
         $serviceName = DockerServicesEnum::PGSQL;
 
         $this->builder->setEnv($env)
-            ->replaceOrAdd('/DB_USERNAME=(.*)/', "DB_USERNAME=sail")
-            ->replaceOrAdd('/DB_CONNECTION=(.*)/', "DB_CONNECTION=$serviceName")
-            ->replaceOrAdd('/DB_HOST=(.*)/', "DB_HOST=$serviceName")
-            ->replaceOrAdd('/DB_PORT=(.*)/', 'DB_PORT=5432')
-            ->replaceOrAdd('/DB_PASSWORD=(.*)/', 'DB_PASSWORD=password');
+            ->replaceOrAdd('/^DB_USERNAME=(.*)/m', "DB_USERNAME=sail")
+            ->replaceOrAdd('/^DB_CONNECTION=(.*)/m', "DB_CONNECTION=$serviceName")
+            ->replaceOrAdd('/^DB_HOST=(.*)/m', "DB_HOST=$serviceName")
+            ->replaceOrAdd('/^DB_PORT=(.*)/m', 'DB_PORT=5432')
+            ->replaceOrAdd('/^DB_PASSWORD=(.*)/m', 'DB_PASSWORD=password');
 
         return $this->builder->getEnv();
     }

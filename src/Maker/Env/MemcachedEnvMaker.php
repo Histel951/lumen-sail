@@ -12,7 +12,7 @@ class MemcachedEnvMaker extends AbstractEnvMaker
         $serviceName = DockerServicesEnum::MEMCACHED;
 
         $this->builder->setEnv($env)
-            ->replaceOrAdd('/MEMCACHED_HOST=(.*)/', "MEMCACHED_HOST=$serviceName");
+            ->replaceOrAdd('/^MEMCACHED_HOST=(.*)/m', "MEMCACHED_HOST=$serviceName");
 
         return $this->builder->getEnv();
     }
