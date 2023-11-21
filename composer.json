@@ -13,7 +13,7 @@
     ],
     "require": {
         "laravel/sail": "*",
-        "symfony/yaml": "^6.3"
+        "symfony/yaml": "^6.0|^7.0"
     },
     "autoload": {
         "psr-4": {
