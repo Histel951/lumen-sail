@@ -20,7 +20,7 @@ $ vendor/bin/lumen-sail
 ## Manual installation:
 
 ```shell
-$ composer require laravel/sail:1.19.0
+$ composer require laravel/sail
 ```
 
 ```shell
