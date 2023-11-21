@@ -6,6 +6,7 @@ namespace Histel\LumenSail\Console;
 use Exception;
 use Histel\LumenSail\DockerServicesEnum as DSE;
 use Histel\LumenSail\Version;
+use Symfony\Component\Yaml\Yaml;
 
 trait InteractsWithDockerComposeServices
 {
@@ -53,11 +54,24 @@ trait InteractsWithDockerComposeServices
     /**
      * Return laravel/sail docker-compose stub to string;
      *
-     * @return string
+     * @return string|array
+     * @throws Exception
      */
-    protected function getDockerComposeYml(): string
+    protected function getDockerComposeYml()
     {
-        return file_get_contents($this->laravel->basePath('vendor/laravel/sail/stubs/docker-compose.stub'));
+        switch ($this->version()) {
+            case 'V2':
+                $composePath = base_path('docker-compose.yml');
+
+                $config = file_exists($composePath)
+                    ? Yaml::parseFile($composePath)
+                    : Yaml::parse(file_get_contents($this->laravel->basePath('vendor/laravel/sail/stubs/docker-compose.stub')));
+            break;
+            default:
+                $config = file_get_contents($this->laravel->basePath('vendor/laravel/sail/stubs/docker-compose.stub'));
+        }
+
+        return $config;
     }
 
     /**

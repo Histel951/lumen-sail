@@ -7,6 +7,7 @@ use Histel\LumenSail\Builder\BuilderFactory;
 use Histel\LumenSail\Builder\BuilderInterface;
 use Histel\LumenSail\Console\InteractsWithDockerComposeServices;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Exception\InvalidArgumentException;
 
 class SailInstallCommand extends Command
 {
@@ -61,9 +62,11 @@ class SailInstallCommand extends Command
         $this->publishStubs();
         $this->configurePhpUnit();
 
-        if ($this->option('devcontainer')) {
-            $this->installDevContainer();
-        }
+        try {
+            if ($this->option('devcontainer')) {
+                $this->installDevContainer();
+            }
+        } catch (InvalidArgumentException $exception) {}
 
         $this->info('Sail scaffolding installed successfully.');
     }

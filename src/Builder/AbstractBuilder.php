@@ -26,7 +26,7 @@ abstract class AbstractBuilder implements BuilderInterface
      */
     protected $config;
 
-    public function __construct(string $config)
+    public function __construct($config)
     {
         $this->config = $config;
 

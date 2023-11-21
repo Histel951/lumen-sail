@@ -9,9 +9,9 @@ use Symfony\Component\Yaml\Yaml;
 
 class DockerYmlServicesMaker extends AbstractDockerMaker
 {
-    public function make(array $services = [], array $config = []): Collection
+    public function make(array $services = [], array $config = []): array
     {
-        $config = collect($services)
+        collect($services)
             ->filter(function ($service) use ($config) {
                 return ! array_key_exists($service, $config['services'] ?? []);
             })->each(function ($service) use (&$config) {

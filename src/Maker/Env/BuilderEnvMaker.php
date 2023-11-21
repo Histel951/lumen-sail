@@ -38,12 +38,12 @@ final class BuilderEnvMaker
     public function replaceOrAdd(string $search, string $replace): self
     {
         if (str_contains($this->env, $replace)) {
-            return;
+            return $this;
         }
 
         if (!preg_match($search, $this->env)) {
             $this->add($replace);
-            return;
+            return $this;
         }
 
         $this->env = preg_replace($search, $replace, $this->env);
