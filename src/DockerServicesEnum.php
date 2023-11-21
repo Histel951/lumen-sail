@@ -14,4 +14,6 @@ abstract class DockerServicesEnum
     const SELENIUM = 'selenium';
     const MEMCACHED = 'memcached';
     const MAIL_HOG = 'mailhog';
+    const SOKETI = 'soketi';
+    const MAIL_PIT = 'mailpit';
 }

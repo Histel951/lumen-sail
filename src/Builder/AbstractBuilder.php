@@ -1,6 +1,8 @@
 <?php
 namespace Histel\LumenSail\Builder;
 
+use Histel\LumenSail\Maker\MakerInterface;
+
 abstract class AbstractBuilder implements BuilderInterface
 {
     /**
@@ -19,16 +21,28 @@ abstract class AbstractBuilder implements BuilderInterface
 
     /**
      * Yml config template.
-     * @var string
+     *
+     * @var string|array
      */
-    protected string $config;
+    protected $config;
 
-    public function __construct(string $config)
+    public function __construct($config)
     {
         $this->config = $config;
 
         foreach ($this->makersClasses as $serviceName => $class) {
-            $this->makers[] = new MakerDTO($serviceName, new $class);
+            $this->makers[$serviceName] = new MakerDTO($serviceName, new $class);
         }
+    }
+
+    /**
+     * Get maker by name.
+     *
+     * @param string $name
+     * @return MakerInterface
+     */
+    protected function getMaker(string $name): MakerInterface
+    {
+        return $this->makers[$name]->getMaker();
     }
 }

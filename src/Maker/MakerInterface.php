@@ -6,7 +6,7 @@ interface MakerInterface
     /**
      * Make config depending on the transferred services.
      *
-     * @return string
+     * @return string|array
      */
-    public function make(): string;
+    public function make();
 }

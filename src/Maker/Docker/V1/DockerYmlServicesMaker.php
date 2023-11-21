@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Histel\LumenSail\Maker\Docker;
+namespace Histel\LumenSail\Maker\Docker\V1;
+
+use Histel\LumenSail\Maker\Docker\AbstractDockerMaker;
 
 class DockerYmlServicesMaker extends AbstractDockerMaker
 {

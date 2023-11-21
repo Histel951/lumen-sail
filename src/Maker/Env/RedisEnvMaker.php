@@ -12,7 +12,7 @@ class RedisEnvMaker extends AbstractEnvMaker
         $serviceName = DockerServicesEnum::REDIS;
 
         $this->builder->setEnv($env)
-            ->replaceOrAdd('/REDIS_HOST=(.*)/', "REDIS_HOST=$serviceName");
+            ->replaceOrAdd('/^REDIS_HOST=(.*)/m', "REDIS_HOST=$serviceName");
 
         return $this->builder->getEnv();
     }

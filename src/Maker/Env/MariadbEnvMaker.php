@@ -12,9 +12,9 @@ class MariadbEnvMaker extends AbstractEnvMaker
         $serviceName = DockerServicesEnum::MARIADB;
 
         $this->builder->setEnv($env)
-            ->replaceOrAdd('/DB_USERNAME=(.*)/', "DB_USERNAME=sail")
-            ->replaceOrAdd('/DB_HOST=(.*)/', "DB_HOST=$serviceName")
-            ->replaceOrAdd('/DB_PASSWORD=(.*)/', 'DB_PASSWORD=password');
+            ->replaceOrAdd('/^DB_USERNAME=(.*)/m', "DB_USERNAME=sail")
+            ->replaceOrAdd('/^DB_HOST=(.*)/m', "DB_HOST=$serviceName")
+            ->replaceOrAdd('/^DB_PASSWORD=(.*)/m', 'DB_PASSWORD=password');
 
         return $this->builder->getEnv();
     }
