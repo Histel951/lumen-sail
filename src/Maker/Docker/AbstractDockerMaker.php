@@ -7,13 +7,18 @@ use Histel\LumenSail\Maker\MakerInterface;
 
 abstract class AbstractDockerMaker implements MakerInterface
 {
-    protected array $services;
+    /**
+     * Services that can be used to make the config.
+     *
+     * @var array
+     */
+    protected array $usesServices = [];
 
-    protected array $usesServices;
-
-    public function __construct(array $services, array $usesServices)
-    {
-        $this->services = $services;
-        $this->usesServices = $usesServices;
-    }
+    /**
+     * Make docker-compose.yml.
+     *
+     * @param array $services services that the user selected for the build
+     * @return array|string
+     */
+    abstract public function make(array $services = []);
 }

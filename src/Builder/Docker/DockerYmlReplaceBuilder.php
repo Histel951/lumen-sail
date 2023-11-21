@@ -3,13 +3,12 @@ declare(strict_types=1);
 
 namespace Histel\LumenSail\Builder\Docker;
 
-use Histel\LumenSail\Builder\BuilderInterface;
-use Histel\LumenSail\Maker\Docker\DockerYmlDependsMaker;
-use Histel\LumenSail\Maker\Docker\DockerYmlServicesMaker;
-use Histel\LumenSail\Maker\Docker\DockerYmlVolumesMaker;
-use Histel\LumenSail\Maker\MakerInterface;
+use Histel\LumenSail\Builder\AbstractBuilder;
+use Histel\LumenSail\Maker\Docker\V1\DockerYmlDependsMaker;
+use Histel\LumenSail\Maker\Docker\V1\DockerYmlServicesMaker;
+use Histel\LumenSail\Maker\Docker\V1\DockerYmlVolumesMaker;
 
-class DockerYmlReplaceBuilder implements BuilderInterface
+class DockerYmlReplaceBuilder extends AbstractBuilder
 {
     /**
      * Latest version of laravel sail which this builder supports.
@@ -18,47 +17,22 @@ class DockerYmlReplaceBuilder implements BuilderInterface
     const LAST_VERSION = '1.19.0';
 
     /**
-     * @var array
+     * @var string[]
      */
-    protected array $serviceDocker = [
-        'volumes' => [
-            'class' => DockerYmlVolumesMaker::class,
-            'services' => ['mysql', 'pgsql', 'mariadb', 'redis', 'meilisearch', 'minio']
-        ],
-        'depends' => [
-            'class' => DockerYmlDependsMaker::class,
-            'services' => ['mysql', 'pgsql', 'mariadb', 'redis', 'selenium']
-        ],
-        'services' => [
-            'class' => DockerYmlServicesMaker::class,
-            'services' => []
-        ]
+    protected array $makersClasses = [
+        'volumes' => DockerYmlVolumesMaker::class,
+        'depends' => DockerYmlDependsMaker::class,
+        'services' => DockerYmlServicesMaker::class,
     ];
-
-    /**
-     * Yml config template.
-     * @var string
-     */
-    private string $dockerYmlConfig;
-
-    public function __construct(string $dockerYmlConfig)
-    {
-        $this->dockerYmlConfig = $dockerYmlConfig;
-    }
 
     public function build(array $services): string
     {
-        foreach ($this->serviceDocker as $config => $item) {
-            /**
-             * @var MakerInterface $dockerYmlMaker
-             */
-            $dockerYmlMaker = new $item['class']($services, $item['services']);
-            $configValue = $dockerYmlMaker->make();
-
-            $this->dockerYmlConfig = str_replace("{{{$config}}}", $configValue, $this->dockerYmlConfig);
+        foreach ($this->makers as $makerDTO) {
+            $configValue = $makerDTO->getMaker()->make($services);
+            $this->config = str_replace("{{{$makerDTO->getName()}}}", $configValue, $this->config);
         }
 
         // Remove empty lines...
-        return preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $this->dockerYmlConfig);
+        return preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $this->config);
     }
 }

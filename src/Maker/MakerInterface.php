@@ -3,5 +3,10 @@ namespace Histel\LumenSail\Maker;
 
 interface MakerInterface
 {
-    public function make(): string;
+    /**
+     * Make config depending on the transferred services.
+     *
+     * @return string|array
+     */
+    public function make();
 }

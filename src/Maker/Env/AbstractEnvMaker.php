@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace Histel\LumenSail\Maker\Env;
 
 use Histel\LumenSail\Maker\MakerInterface;
@@ -6,40 +8,16 @@ use Histel\LumenSail\Maker\MakerInterface;
 abstract class AbstractEnvMaker implements MakerInterface
 {
     /**
-     * @var string
+     * Class for building env config.
+     *
+     * @var BuilderEnvMaker
      */
-    protected string $env;
+    protected BuilderEnvMaker $builder;
 
-    public function __construct(string $env)
+    public function __construct()
     {
-        $this->env = $env;
+        $this->builder = new BuilderEnvMaker();
     }
 
-    /**
-     * @param string $config
-     * @return void
-     */
-    protected function add(string $config): void
-    {
-        $this->env .= "\n$config";
-    }
-
-    /**
-     * @param string $search
-     * @param string $replace
-     * @return void
-     */
-    protected function replaceOrAdd(string $search, string $replace): void
-    {
-        if (str_contains($this->env, $replace)) {
-            return;
-        }
-
-        if (!str_contains($this->env, $search)) {
-            $this->add($replace);
-            return;
-        }
-
-        $this->env = str_replace($search, $replace, $this->env);
-    }
+    abstract public function make(string $env = ''): string;
 }

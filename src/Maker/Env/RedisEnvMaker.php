@@ -3,12 +3,17 @@ declare(strict_types=1);
 
 namespace Histel\LumenSail\Maker\Env;
 
+use Histel\LumenSail\DockerServicesEnum;
+
 class RedisEnvMaker extends AbstractEnvMaker
 {
-    public function make(): string
+    public function make(string $env = ''): string
     {
-        $this->replaceOrAdd('REDIS_HOST=127.0.0.1', 'REDIS_HOST=redis');
+        $serviceName = DockerServicesEnum::REDIS;
 
-        return $this->env;
+        $this->builder->setEnv($env)
+            ->replaceOrAdd('/^REDIS_HOST=(.*)/m', "REDIS_HOST=$serviceName");
+
+        return $this->builder->getEnv();
     }
 }

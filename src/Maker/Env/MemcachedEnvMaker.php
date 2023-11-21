@@ -3,12 +3,17 @@ declare(strict_types=1);
 
 namespace Histel\LumenSail\Maker\Env;
 
+use Histel\LumenSail\DockerServicesEnum;
+
 class MemcachedEnvMaker extends AbstractEnvMaker
 {
-    public function make(): string
+    public function make(string $env = ''): string
     {
-        $this->replaceOrAdd('MEMCACHED_HOST=127.0.0.1', 'MEMCACHED_HOST=memcached');
+        $serviceName = DockerServicesEnum::MEMCACHED;
 
-        return $this->env;
+        $this->builder->setEnv($env)
+            ->replaceOrAdd('/^MEMCACHED_HOST=(.*)/m', "MEMCACHED_HOST=$serviceName");
+
+        return $this->builder->getEnv();
     }
 }
