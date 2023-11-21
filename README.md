@@ -2,11 +2,11 @@
 Installing Laravel Sail Package in Lumen
 
 ```shell
-$ composer require laravel/sail
+$ composer require histel/lumen-sail
 ```
 
 ```shell
-$ composer require histel/lumen-sail
+$ composer require laravel/sail
 ```
 
 Add this line to bootstrap/app.php
