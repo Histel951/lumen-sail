@@ -1,12 +1,30 @@
 # lumen-sail
 Installing Laravel Sail Package in Lumen
 
+## Script install: 
+
 ```shell
 $ composer require histel/lumen-sail
 ```
 
+Add this line to bootstrap/app.php
+
+```PHP
+$app->register(\Histel\LumenSail\LumenSailServiceProvider::class);
+```
+
 ```shell
-$ composer require laravel/sail
+$ vendor/bin/lumen-sail 
+```
+
+## Manual installation:
+
+```shell
+$ composer require laravel/sail:1.19.0
+```
+
+```shell
+$ composer require histel/lumen-sail
 ```
 
 Add this line to bootstrap/app.php
