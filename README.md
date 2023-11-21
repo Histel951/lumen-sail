@@ -20,11 +20,11 @@ $ vendor/bin/lumen-sail
 ## Manual installation:
 
 ```shell
-$ composer require laravel/sail
+$ composer require histel/lumen-sail
 ```
 
 ```shell
-$ composer require histel/lumen-sail
+$ composer require laravel/sail
 ```
 
 Add this line to bootstrap/app.php
